@@ -76,15 +76,15 @@ The application will now be running on http://localhost:3001.
 **Raoul Ossombe** : [Backend Developer] - check my github [nuoremac][git-prof-1]
 
 [git-prof-1]: https://github.com/nuoremac
-**Darelle Hapket** : [UI/UX Designer, Frontend Developer] - [DarelleHapket][git-prof-2]
+**Darelle Hapket** : [UI/UX Designer, Frontend Developer] - check my github [DarelleHapket][git-prof-2]
 
 [git-prof-2]: https://github.com/DarelleHapket
 
-**Disney Tagne** : [Frontend Developer] - [Override][git-prof-3]
+**Disney Tagne** : [Frontend Developer] - check my github [Override][git-prof-3]
 
 [git-prof-3]: https://github.com/Override
     
-**Samuel Tagatsing** : [Backend Developer && Database] - [samuel200220][git-prof-4]
+**Samuel Tagatsing** : [Backend Developer && Database] - check my github [samuel200220][git-prof-4]
 
 [git-prof-4]: https://github.com/samuel200220
 
