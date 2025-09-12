@@ -9,7 +9,7 @@ A collaborative platform for African Civil Society Organizations (CSOs) to conne
 
 # 🚀 Key Features
 
-    	CSO Profiles: Detailed and searchable profiles that allow organizations to showcase their work, mission, and needs to a wider audience.
+    CSO Profiles: Detailed and searchable profiles that allow organizations to showcase their work, mission, and needs to a wider audience.
 
 	Targeted Discovery: A powerful search and filter system that enables CSOs to find ideal partners based on their area of focus, geographic location, and specific project requirements.
 
@@ -23,7 +23,7 @@ A collaborative platform for African Civil Society Organizations (CSOs) to conne
 
 	Database: Supabase (PostgreSQL)
 
-    	Version Control: Git & GitHub
+    Version Control: Git & GitHub
 
 # 🎯 How It Works
 
@@ -73,15 +73,13 @@ The application will now be running on http://localhost:3001.
 
 # 👥 Team
 
-
-
     **Raoul Ossombe** : [Backend Developer] - https://github.com/nuoremac
 
-    **Darelle Hapket** : [UI/UX Designer, Frontend Developer] - [Link to their LinkedIn or GitHub]
+    **Darelle Hapket** : [UI/UX Designer, Frontend Developer] - https://github.com/DarelleHapket
 
-    **Disney Tagne** : [Frontend Developer] - [Link to their LinkedIn or GitHub]
+    **Disney Tagne** : [Frontend Developer] - https://github.com/Override
     
-    **Samuel Tagatsing** : [Backend Developer && Database] - [Link to their LinkedIn or GitHub]
+    **Samuel Tagatsing** : [Backend Developer && Database] - https://github.com/samuel200220
 
 # 🔮 Future Vision
 
