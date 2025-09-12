@@ -13,5 +13,60 @@ Content-Type: application/json
     "focus_areas": ["youth empowerment", "education"]
 }
 
+### Create a new CSO: Women for Progress in Ghana
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "Women for Progress Ghana",
+    "mission": "Promoting gender equality and economic empowerment for women in Ghana.",
+    "country": "Ghana",
+    "focus_areas": ["gender equality", "economic empowerment", "microfinance"]
+}
+
+### Create a new CSO: Health for All in Kenya
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "Kenya Health Foundation",
+    "mission": "Providing access to quality healthcare for rural communities across Kenya.",
+    "country": "Kenya",
+    "focus_areas": ["public health", "community clinics", "disease prevention"]
+}
+
+### Create a new CSO: Environmental Action in South Africa
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "Green Earth South Africa",
+    "mission": "Protecting natural ecosystems and advocating for sustainable environmental policies.",
+    "country": "South Africa",
+    "focus_areas": ["climate action", "conservation", "sustainable development"]
+}
+
+### Create a new CSO: Human Rights in Cameroon
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "Cameroon Human Rights Watch",
+    "mission": "Monitoring and reporting on human rights abuses and advocating for justice.",
+    "country": "Cameroon",
+    "focus_areas": ["human rights", "advocacy", "justice"]
+}
+
+### Create a new CSO: Education First in Egypt
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "Egyptian Education Initiative",
+    "mission": "Enhancing educational opportunities and literacy rates for underprivileged children.",
+    "country": "Egypt",
+    "focus_areas": ["education", "literacy", "youth development"]
+}
+
 ### Get CSOs by filter
-GET http://localhost:3001/api/csos?country=Nigeria
+GET http://localhost:3001/api/csos?focus_areas=education
