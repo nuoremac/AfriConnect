@@ -73,13 +73,13 @@ The application will now be running on http://localhost:3001.
 
 # 👥 Team
 
-    **Raoul Ossombe** : [Backend Developer] - https://github.com/nuoremac
+**Raoul Ossombe** : [Backend Developer] - https://github.com/nuoremac
 
-    **Darelle Hapket** : [UI/UX Designer, Frontend Developer] - https://github.com/DarelleHapket
+**Darelle Hapket** : [UI/UX Designer, Frontend Developer] - https://github.com/DarelleHapket
 
-    **Disney Tagne** : [Frontend Developer] - https://github.com/Override
+**Disney Tagne** : [Frontend Developer] - https://github.com/Override
     
-    **Samuel Tagatsing** : [Backend Developer && Database] - https://github.com/samuel200220
+**Samuel Tagatsing** : [Backend Developer && Database] - https://github.com/samuel200220
 
 # 🔮 Future Vision
 
