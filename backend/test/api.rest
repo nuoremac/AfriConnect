@@ -1,0 +1,17 @@
+### Testing the server is running
+GET http://localhost:3001/
+### Fetch all CSOs
+GET http://localhost:3001/api/csos
+### Create a new CSO
+POST http://localhost:3001/api/csos
+Content-Type: application/json
+
+{
+    "name": "African Youth Initiative",
+    "mission": "To empower young leaders across Africa.",
+    "country": "Nigeria",
+    "focus_areas": ["youth empowerment", "education"]
+}
+
+### Get CSOs by filter
+GET http://localhost:3001/api/csos?country=Nigeria
