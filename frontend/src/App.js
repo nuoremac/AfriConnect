@@ -1,15 +1,16 @@
-// src/App.js
+import React from "react";
 
-import React from 'react';
-import ProfilePage from './components/ProfilePage/ProfilePage'; // Import your new component
-import './App.css';
+import DiscoveryPage from "./Components/discovery/DiscoveryPage";
 
 function App() {
   return (
-    // Instead of the default 'Learn React' content, we render the ProfilePage
-    <div className="App">
-      <ProfilePage />
-    </div>
+
+    <div className="App"> 
+
+      <DiscoveryPage />
+
+      </div>
+
   );
 }
 
