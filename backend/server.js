@@ -1,71 +1,60 @@
 const express = require('express');
 const cors = require('cors');
-const supabase = require('./supabaseClient'); // Import the client
+const supabase = require('./supabaseClient'); // Import du client Supabase
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
 
-// Basic route to check if the server is running
+// ✅ Route de base pour vérifier si le serveur tourne
 app.get('/', (req, res) => {
   res.send('Backend server is running!');
 });
 
-
-// API endpoint to fetch CSOs with multiple filters
+// ✅ Endpoint 1 : récupérer toutes les OSC (avec filtres optionnels)
 app.get('/api/csos', async (req, res) => {
   try {
     const { country, focus_areas } = req.query;
-    let query = supabase.from('csos').select('*'); // Base query starts here
+    let query = supabase.from('csos').select('*');
 
-    // Chain the filters together. The order doesn't matter.
     if (country) {
       query = query.eq('country', country);
     }
 
     if (focus_areas) {
-      // Supabase's `.contains()` method for array columns
       query = query.contains('focus_areas', [focus_areas]);
     }
 
-    const { data, error } = await query; // Execute the final chained query
-
+    const { data, error } = await query;
     if (error) throw error;
+
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-
-// API endpoint to post new CSO data
-/*app.post('/api/csos', async (req, res) => {
+// ✅ Endpoint 2 : ajouter une demande de collaboration
+app.post('/api/collaboration_requests', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('csos').insert([req.body]);
-    if (error) throw error;
-    res.status(201).json(data); //<-- if successful will return null to the
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});*/
-
-app.post('/api/csos', async (req, res) => {
-  try {
+    const { cso_id, message } = req.body;
     const { data, error } = await supabase
-      .from('csos')
-      .insert([req.body])
-      .select(); // <--- Add .select() here
+      .from('collaboration_requests')
+      .insert([{ cso_id, message }])
+      .select();
 
     if (error) throw error;
 
-    // Supabase returns an array, so get the first item
-    res.status(201).json(data[0]); 
+    res.status(201).json(data[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+
+// ✅ Lancer le serveur
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
