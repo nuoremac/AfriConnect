@@ -80,9 +80,6 @@ The application will now be running on http://localhost:3001.
 
 [git-prof-2]: https://github.com/DarelleHapket
 
-**Disney Tagne** : [Frontend Developer] - check my github [Override][git-prof-3]
-
-[git-prof-3]: https://github.com/Override
     
 **Samuel Tagatsing** : [Backend Developer && Database] - check my github [samuel200220][git-prof-4]
 
