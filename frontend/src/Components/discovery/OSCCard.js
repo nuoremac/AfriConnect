@@ -1,17 +1,22 @@
 // src/components/discovery/OSCCard.js
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const OSCCard = ({ osc }) => {
 
   // STATE - données internes du composant
   const [isHovered, setIsHovered] = useState(false);
 
+  const navigate = useNavigate();// Hook pour la navigation
+
   // EVENTS - actions utilisateur
   const handleViewProfile = () => {
-    console.log(`Voir profil de ${osc.name}`);
+    // console.log(`Voir profil de ${osc.name}`);
+    navigate(`/profile/${osc.id}`); //Navigation vers la page de profil
     // Logique pour voir le profil
-  };
 
+ 
+  };
   const handleSendRequest = () => {
     console.log(`Envoyer requête à ${osc.name}`);
     // Logique pour envoyer une requête
@@ -79,9 +84,11 @@ const OSCCard = ({ osc }) => {
         </button>
         <button 
           style={styles.btnOutlineSecondary}
-          onClick={handleSendRequest}
+        //  redirection vers la page de chat
+          onClick={() => navigate(`/collaborate/${osc.id}`)}
+          
         >
-           Requête
+           Requête de collaboration
         </button>
       </div>
     </div>
@@ -98,13 +105,13 @@ const styles = {
     position: 'relative',
     transition: 'all 0.3s ease',
     overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     cursor: 'pointer'
   },
 
   cardHovered: {
     transform: 'translateY(-3px)',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+    // boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
     borderColor: '#1877f2'
   },
 
@@ -118,7 +125,7 @@ const styles = {
     borderRadius: '16px',
     fontSize: '12px',
     fontWeight: '600',
-    boxShadow: '0 2px 8px rgba(66, 184, 131, 0.3)'
+    // boxShadow: '0 2px 8px rgba(66, 184, 131, 0.3)'
   },
 
   cardHeader: {
@@ -132,15 +139,15 @@ const styles = {
   cardAvatar: {
     width: '50px',
     height: '50px',
-    background: 'linear-gradient(135deg, #1877f2, #ff6900)',
+    background: '#f0f2f5',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'white',
+     color: '#1877f2',
     fontWeight: '700',
     fontSize: '18px',
-    boxShadow: '0 4px 12px rgba(24, 119, 242, 0.3)'
+    // boxShadow: '0 4px 12px rgba(24, 119, 242, 0.3)'
   },
 
   cardInfo: {

@@ -124,7 +124,7 @@ const styles = {
     fontWeight: '700',
     color: '#1c1e21',
     marginBottom: '8px',
-    background: 'linear-gradient(135deg, #1877f2, #ff6900)',
+    background: ' #1877f2',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text'
