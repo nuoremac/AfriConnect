@@ -84,9 +84,11 @@ const OSCCard = ({ osc }) => {
         </button>
         <button 
           style={styles.btnOutlineSecondary}
-          onClick={handleSendRequest}
+        //  redirection vers la page de chat
+          onClick={() => navigate(`/collaborate/${osc.id}`)}
+          
         >
-           Requête
+           Requête de collaboration
         </button>
       </div>
     </div>
