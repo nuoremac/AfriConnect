@@ -1,28 +1,53 @@
 // src/components/LandingPage.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import supabase from '../supabaseClient';
+import toast from 'react-hot-toast';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  
-  // États pour gérer le hover des boutons
-  const [hoveredButton, setHoveredButton] = React.useState(null);
+  const [hoveredButton, setHoveredButton] = useState(null);
+  const [session, setSession] = useState(null);
 
-  // EVENTS - Navigation handlers
+  // Charger la session au montage + écouter les changements
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+    };
+    fetchSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // EVENTS
+  const handleLogin = () => navigate('/login');
+
   const handleSignUp = () => {
-    navigate('/create-profile');
+    if (session) {
+      navigate('/create-profile');
+    } else {
+      navigate('/login');
+    }
   };
 
-  const handleLogin = () => {
-    navigate('/login');
-  };
+  const handleGetStarted = () => handleSignUp();
 
-  const handleGetStarted = () => {
-   navigate('/create-profile');
-  };
-
-  const handleDiscover = () => {
-    navigate('/discover');
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Déconnecté !");
+      setSession(null);
+      navigate('/'); // retour à la landing
+    }
   };
 
   return (
@@ -32,18 +57,46 @@ const LandingPage = () => {
         <div style={styles.navContainer}>
           <div style={styles.logo}>AFRICONNECT</div>
           <div style={styles.navButtons}>
-            <button 
-              onClick={handleLogin} 
-              style={{
-                ...styles.btnOutline,
-                ...(hoveredButton === 'login' ? styles.btnOutlineHover : {})
-              }}
-              onMouseEnter={() => setHoveredButton('login')}
-              onMouseLeave={() => setHoveredButton(null)}
-            >
-              Se connecter
-            </button>
-            
+            {session ? (
+              <>
+                <button 
+                  onClick={() => navigate('/create-profile')} 
+                  style={{
+                    ...styles.btnOutline,
+                    ...(hoveredButton === 'profile' ? styles.btnOutlineHover : {})
+                  }}
+                  onMouseEnter={() => setHoveredButton('profile')}
+                  onMouseLeave={() => setHoveredButton(null)}
+                >
+                  Mon profil
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  style={{
+                    ...styles.btnOutline,
+                    borderColor: 'red',
+                    color: 'red',
+                    ...(hoveredButton === 'logout' ? { background: 'red', color: 'white' } : {})
+                  }}
+                  onMouseEnter={() => setHoveredButton('logout')}
+                  onMouseLeave={() => setHoveredButton(null)}
+                >
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={handleLogin} 
+                style={{
+                  ...styles.btnOutline,
+                  ...(hoveredButton === 'login' ? styles.btnOutlineHover : {})
+                }}
+                onMouseEnter={() => setHoveredButton('login')}
+                onMouseLeave={() => setHoveredButton(null)}
+              >
+                Se connecter
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -52,7 +105,9 @@ const LandingPage = () => {
       <main style={styles.main}>
         <section style={styles.hero}>
           <div style={styles.heroContainer}>
-            <h1 style={styles.heroTitle}>Together, Let’s Build a Stronger African Civil Society</h1>
+            <h1 style={styles.heroTitle}>
+              Together, Let’s Build a Stronger African Civil Society
+            </h1>
             <p style={styles.heroText}>
               La plateforme qui permet aux organisations de la société civile de se découvrir et collaborer efficacement.
             </p>
@@ -67,20 +122,8 @@ const LandingPage = () => {
                 onMouseEnter={() => setHoveredButton('getstarted')}
                 onMouseLeave={() => setHoveredButton(null)}
               >
-                Créer mon profil
+                {session ? "Créer mon profil" : "Commencer"}
               </button>
-              {/* <button 
-                onClick={handleDiscover} 
-                style={{
-                  ...styles.btnOutline, 
-                  ...styles.btnHero,
-                  ...(hoveredButton === 'discover' ? styles.btnOutlineHover : {})
-                }}
-                onMouseEnter={() => setHoveredButton('discover')}
-                onMouseLeave={() => setHoveredButton(null)}
-              >
-                Découvrir
-              </button> */}
             </div>
           </div>
         </section>
@@ -89,7 +132,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerContainer}>
-          <p style={styles.footerText}> The Underdogs - Hackathon CIDP 2025</p>
+          <p style={styles.footerText}>The Underdogs - Hackathon CIDP 2025</p>
         </div>
       </footer>
     </div>
@@ -246,31 +289,6 @@ const styles = {
     color: '#65676b',
     margin: 0,
     fontSize: '14px'
-  },
-
-  // Responsive design
-  '@media (max-width: 768px)': {
-    heroTitle: {
-      fontSize: '36px'
-    },
-    heroText: {
-      fontSize: '18px'
-    },
-    heroButtons: {
-      flexDirection: 'column',
-      alignItems: 'center'
-    },
-    navButtons: {
-      gap: '10px'
-    },
-    btnOutline: {
-      padding: '10px 20px',
-      fontSize: '13px'
-    },
-    btnPrimary: {
-      padding: '10px 20px',
-      fontSize: '13px'
-    }
   }
 };
 

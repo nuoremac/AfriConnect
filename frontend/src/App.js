@@ -8,10 +8,12 @@ import LandingPage from "./Components/Landing/LandingPage";
 import LoginForm from "./Components/Form/LoginForm";
 import CreateProfileForm from "./Components/Form/CreateProfileForm";
 import CollaborationChat from "./Components/Form/CollaborationChat";
+import { Toaster } from 'react-hot-toast';
 function App() {
   return (
 
     <div className="App"> 
+    <Toaster position="top-right" reverseOrder={false} />
 
       <Router>
         <div className="App">

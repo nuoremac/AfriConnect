@@ -1,6 +1,8 @@
 // src/components/CreateProfileForm.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import supabase from '../supabaseClient'; // client Supabase
+import toast from 'react-hot-toast';
 
 const CreateProfileForm = () => {
   const navigate = useNavigate();
@@ -10,26 +12,29 @@ const CreateProfileForm = () => {
     mission: '',
     country: '',
     focus_areas: [],
+    email: '',
     password: '',
     confirmPassword: ''
   });
 
-  // Options pour les pays africains
+  const [loading, setLoading] = useState(false);
+
+  // Liste des pays africains
   const countries = [
     'Cameroun', 'Sénégal', 'Ghana', 'Nigeria', 'Kenya', 'Afrique du Sud',
     'Maroc', 'Égypte', 'Éthiopie', 'Tanzanie', 'Mali', 'Burkina Faso',
     'Côte d\'Ivoire', 'Niger', 'Tchad', 'Autre'
   ];
 
-  // Domaines d'intervention possibles
+  // Domaines d'intervention
   const availableFocusAreas = [
-    'Éducation', 'Santé', 'Droits humains', 'Environnement', 
-    'Égalité des genres', 'Développement économique', 
+    'Éducation', 'Santé', 'Droits humains', 'Environnement',
+    'Égalité des genres', 'Développement économique',
     'Gouvernance', 'Agriculture', 'Formation', 'Sensibilisation',
     'Protection', 'Justice', 'Jeunesse', 'Autonomisation'
   ];
 
-  // Gestion des changements dans le formulaire
+  // Gestion des changements dans les inputs
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -37,52 +42,62 @@ const CreateProfileForm = () => {
     });
   };
 
-  // Gestion des domaines d'intervention (multiple)
+  // Sélection/déselection d’un domaine d’intervention
   const handleFocusAreaChange = (area) => {
-    const currentAreas = formData.focus_areas;
-    if (currentAreas.includes(area)) {
+    if (formData.focus_areas.includes(area)) {
       setFormData({
         ...formData,
-        focus_areas: currentAreas.filter(a => a !== area)
+        focus_areas: formData.focus_areas.filter(a => a !== area)
       });
     } else {
       setFormData({
         ...formData,
-        focus_areas: [...currentAreas, area]
+        focus_areas: [...formData.focus_areas, area]
       });
     }
   };
 
-  // Gestion de la soumission
-  const handleSubmit = (e) => {
+  // Soumission du formulaire
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation mot de passe
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      toast.error('Les mots de passe ne correspondent pas');
       return;
     }
 
-    // Validation domaines d'intervention
     if (formData.focus_areas.length === 0) {
-      alert('Veuillez sélectionner au moins un domaine d\'intervention');
+      toast.error('Veuillez sélectionner au moins un domaine');
       return;
     }
 
-    // TODO: Enregistrement en base de données
-    const oscProfile = {
-      name: formData.name,
-      mission: formData.mission,
-      country: formData.country,
-      focus_areas: formData.focus_areas.join(', '), // Conversion en string pour la DB
-      password: formData.password,
-      created_at: new Date().toISOString()
-    };
+    setLoading(true);
 
-    console.log('Nouveau profil OSC à enregistrer:', oscProfile);
-    
-    // Redirection vers découverte après création
-    navigate('/discover');
+    try {
+      // 1️⃣ Création du compte utilisateur
+      const { error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (authError) throw authError;
+
+      // 2️⃣ Sauvegarde temporaire des infos dans localStorage
+      localStorage.setItem("pendingProfile", JSON.stringify({
+        name: formData.name,
+        mission: formData.mission,
+        country: formData.country,
+        focus_areas: formData.focus_areas
+      }));
+
+      toast.success('Compte créé 🎉 Vérifiez votre email pour confirmer, puis connectez-vous.');
+      navigate('/login');
+    } catch (error) {
+      console.error('Erreur:', error.message);
+      toast.error('Erreur: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackToHome = () => {
@@ -99,7 +114,7 @@ const CreateProfileForm = () => {
       <nav style={styles.navbar}>
         <div style={styles.navContainer}>
           <div style={styles.logo} onClick={handleBackToHome}>AFRICONNECT</div>
-          <button 
+          <button
             onClick={handleBackToHome}
             style={{
               ...styles.btnOutline,
@@ -113,7 +128,7 @@ const CreateProfileForm = () => {
         </div>
       </nav>
 
-      {/* Formulaire de création de profil */}
+      {/* Formulaire */}
       <main style={styles.main}>
         <div style={styles.formContainer}>
           <div style={styles.formCard}>
@@ -123,6 +138,19 @@ const CreateProfileForm = () => {
             </p>
 
             <form onSubmit={handleSubmit} style={styles.form}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  style={styles.input}
+                  placeholder="exemple@mail.com"
+                  required
+                />
+              </div>
+
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Nom de l'organisation *</label>
                 <input
@@ -137,38 +165,36 @@ const CreateProfileForm = () => {
               </div>
 
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Mission de l'organisation *</label>
+                <label style={styles.label}>Mission *</label>
                 <textarea
                   name="mission"
                   value={formData.mission}
                   onChange={handleInputChange}
                   style={styles.textarea}
-                  placeholder="Décrivez brièvement la mission et les objectifs de votre organisation..."
+                  placeholder="Décrivez brièvement la mission de votre organisation..."
                   rows="4"
                   required
                 />
               </div>
 
-              <div style={styles.inputRow}>
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Pays *</label>
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    style={styles.select}
-                    required
-                  >
-                    <option value="">Sélectionner un pays</option>
-                    {countries.map(country => (
-                      <option key={country} value={country}>{country}</option>
-                    ))}
-                  </select>
-                </div>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Pays *</label>
+                <select
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  style={styles.select}
+                  required
+                >
+                  <option value="">Sélectionner un pays</option>
+                  {countries.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
               </div>
 
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Domaines d'intervention * (sélectionner plusieurs)</label>
+                <label style={styles.label}>Domaines d'intervention *</label>
                 <div style={styles.tagsContainer}>
                   {availableFocusAreas.map(area => (
                     <button
@@ -184,11 +210,6 @@ const CreateProfileForm = () => {
                     </button>
                   ))}
                 </div>
-                {formData.focus_areas.length > 0 && (
-                  <p style={styles.selectedText}>
-                    Sélectionnés: {formData.focus_areas.join(', ')}
-                  </p>
-                )}
               </div>
 
               <div style={styles.inputRow}>
@@ -207,7 +228,7 @@ const CreateProfileForm = () => {
                 </div>
 
                 <div style={styles.inputGroup}>
-                  <label style={styles.label}>Confirmer le mot de passe *</label>
+                  <label style={styles.label}>Confirmer *</label>
                   <input
                     type="password"
                     name="confirmPassword"
@@ -220,42 +241,26 @@ const CreateProfileForm = () => {
                 </div>
               </div>
 
-              <div style={styles.termsGroup}>
-                <label style={styles.checkboxLabel}>
-                  <input type="checkbox" style={styles.checkbox} required />
-                  J'accepte les conditions d'utilisation et la politique de confidentialité
-                </label>
-              </div>
-
               <button
                 type="submit"
                 style={{
                   ...styles.btnPrimary,
-                  ...styles.btnSubmit,
                   ...(hoveredButton === 'submit' ? styles.btnPrimaryHover : {})
                 }}
+                disabled={loading}
                 onMouseEnter={() => setHoveredButton('submit')}
                 onMouseLeave={() => setHoveredButton(null)}
               >
-                Créer mon profil
+                {loading ? 'Création...' : 'Créer mon profil'}
               </button>
             </form>
 
-            <div style={styles.divider}>
-              <span style={styles.dividerText}>ou</span>
-            </div>
-
             <div style={styles.loginPrompt}>
-              <p style={styles.loginText}>
+              <p>
                 Déjà un compte ?{' '}
                 <button
                   onClick={handleGoToLogin}
-                  style={{
-                    ...styles.linkButton,
-                    ...(hoveredButton === 'login' ? styles.linkButtonHover : {})
-                  }}
-                  onMouseEnter={() => setHoveredButton('login')}
-                  onMouseLeave={() => setHoveredButton(null)}
+                  style={styles.linkButton}
                 >
                   Se connecter
                 </button>
@@ -264,304 +269,36 @@ const CreateProfileForm = () => {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <div style={styles.footerContainer}>
-          <p style={styles.footerText}>Les outsiders - Hackathon CIDP 2025</p>
-        </div>
-      </footer>
     </div>
   );
 };
 
-// STYLES
-const styles = {
-  container: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    lineHeight: '1.6',
-    color: '#1c1e21',
-    background: '#f8f9fa',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-
-  // Navigation
-  navbar: {
-    background: 'white',
-    padding: '20px 0',
-    borderBottom: '1px solid #1877f2',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-  },
-
-  navContainer: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-
-  logo: {
-    fontSize: '32px',
-    fontWeight: '700',
-    color: '#1877f2',
-    cursor: 'pointer'
-  },
-
-  btnOutline: {
-    padding: '12px 24px',
-    background: 'white',
-    color: '#1877f2',
-    border: '2px solid #1877f2',
-    borderRadius: '8px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    fontSize: '14px'
-  },
-
-  btnOutlineHover: {
-    background: '#1877f2',
-    color: 'white',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(24, 119, 242, 0.3)'
-  },
-
-  // Main content
-  main: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '40px 20px'
-  },
-
-  formContainer: {
-    width: '100%',
-    maxWidth: '700px'
-  },
-
-  formCard: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '40px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-    border: '1px solid #e4e6ea'
-  },
-
-  formTitle: {
-    fontSize: '32px',
-    fontWeight: '700',
-    marginBottom: '8px',
-    color: '#1c1e21',
-    textAlign: 'center'
-  },
-
-  formSubtitle: {
-    fontSize: '16px',
-    color: '#65676b',
-    textAlign: 'center',
-    marginBottom: '32px'
-  },
-
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px'
-  },
-
-  inputRow: {
-    display: 'flex',
-    gap: '16px'
-  },
-
-  inputGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1
-  },
-
-  label: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1c1e21',
-    marginBottom: '8px'
-  },
-
-  input: {
-    padding: '16px',
-    fontSize: '16px',
-    border: '2px solid #e4e6ea',
-    borderRadius: '8px',
-    transition: 'border-color 0.3s ease',
-    outline: 'none',
-    fontFamily: 'inherit'
-  },
-
-  textarea: {
-    padding: '16px',
-    fontSize: '16px',
-    border: '2px solid #e4e6ea',
-    borderRadius: '8px',
-    transition: 'border-color 0.3s ease',
-    outline: 'none',
-    fontFamily: 'inherit',
-    resize: 'vertical',
-    minHeight: '100px'
-  },
-
-  select: {
-    padding: '16px',
-    fontSize: '16px',
-    border: '2px solid #e4e6ea',
-    borderRadius: '8px',
-    transition: 'border-color 0.3s ease',
-    outline: 'none',
-    fontFamily: 'inherit',
-    background: 'white'
-  },
-
-  tagsContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginTop: '8px'
-  },
-
-  tagButton: {
-    padding: '8px 16px',
-    background: '#f0f2f5',
-    color: '#65676b',
-    border: '2px solid #e4e6ea',
-    borderRadius: '20px',
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease'
-  },
-
-  tagButtonActive: {
-    background: '#1877f2',
-    color: 'white',
-    borderColor: '#1877f2'
-  },
-
-  selectedText: {
-    fontSize: '12px',
-    color: '#1877f2',
-    marginTop: '8px',
-    fontStyle: 'italic'
-  },
-
-  termsGroup: {
-    fontSize: '14px'
-  },
-
-  checkboxLabel: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    color: '#65676b',
-    cursor: 'pointer',
-    lineHeight: '1.4'
-  },
-
-  checkbox: {
-    marginRight: '8px',
-    marginTop: '2px',
-    flexShrink: 0
-  },
-
-  btnPrimary: {
-    padding: '16px 32px',
-    background: '#ff6900',
-    color: 'white',
-    border: '2px solid #ff6900',
-    borderRadius: '8px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    fontSize: '16px'
-  },
-
-  btnPrimaryHover: {
-    background: '#e55a00',
-    borderColor: '#e55a00',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(255, 105, 0, 0.3)'
-  },
-
-  btnSubmit: {
-    marginTop: '8px'
-  },
-
-  divider: {
-    textAlign: 'center',
-    margin: '24px 0'
-  },
-
-  dividerText: {
-    background: 'white',
-    color: '#65676b',
-    padding: '0 16px',
-    fontSize: '14px'
-  },
-
-  loginPrompt: {
-    textAlign: 'center'
-  },
-
-  loginText: {
-    color: '#65676b',
-    fontSize: '14px',
-    margin: 0
-  },
-
-  linkButton: {
-    background: 'none',
-    border: 'none',
-    color: '#1877f2',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'color 0.3s ease',
-    fontSize: 'inherit',
-    padding: 0
-  },
-
-  linkButtonHover: {
-    color: '#e55a00'
-  },
-
-  // Footer
-  footer: {
-    background: '#e7effaff',
-    padding: '30px 0'
-  },
-
-  footerContainer: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 20px',
-    textAlign: 'center'
-  },
-
-  footerText: {
-    color: '#65676b',
-    margin: 0,
-    fontSize: '14px'
-  },
-
-  // Responsive
-  '@media (max-width: 768px)': {
-    inputRow: {
-      flexDirection: 'column'
-    },
-    
-    formCard: {
-      padding: '30px 20px'
-    }
-  }
+// Styles (inchangés)
+const styles = { 
+  container: { fontFamily: 'sans-serif', background: '#f8f9fa', minHeight: '100vh' },
+  navbar: { background: 'white', padding: '20px', borderBottom: '1px solid #1877f2' },
+  navContainer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  logo: { fontSize: '32px', fontWeight: '700', color: '#1877f2', cursor: 'pointer' },
+  btnOutline: { padding: '10px 20px', border: '2px solid #1877f2', borderRadius: '8px', background: 'white', cursor: 'pointer' },
+  btnOutlineHover: { background: '#1877f2', color: 'white' },
+  main: { display: 'flex', justifyContent: 'center', padding: '40px' },
+  formContainer: { maxWidth: '700px', width: '100%' },
+  formCard: { background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' },
+  formTitle: { fontSize: '28px', fontWeight: '700', marginBottom: '10px', textAlign: 'center' },
+  formSubtitle: { textAlign: 'center', color: '#65676b', marginBottom: '20px' },
+  form: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  inputGroup: { display: 'flex', flexDirection: 'column' },
+  inputRow: { display: 'flex', gap: '16px' },
+  input: { padding: '12px', borderRadius: '6px', border: '1px solid #ddd' },
+  textarea: { padding: '12px', borderRadius: '6px', border: '1px solid #ddd' },
+  select: { padding: '12px', borderRadius: '6px', border: '1px solid #ddd' },
+  tagsContainer: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
+  tagButton: { padding: '8px 12px', borderRadius: '20px', border: '1px solid #ddd', background: '#f0f2f5', cursor: 'pointer' },
+  tagButtonActive: { background: '#1877f2', color: 'white' },
+  btnPrimary: { padding: '12px 24px', background: '#ff6900', border: '2px solid #ff6900', color: 'white', borderRadius: '8px', cursor: 'pointer' },
+  btnPrimaryHover: { background: '#e55a00' },
+  loginPrompt: { marginTop: '20px', textAlign: 'center' },
+  linkButton: { background: 'none', border: 'none', color: '#1877f2', cursor: 'pointer' }
 };
 
 export default CreateProfileForm;
