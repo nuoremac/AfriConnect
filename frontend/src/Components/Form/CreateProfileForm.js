@@ -1,12 +1,13 @@
 // src/components/CreateProfileForm.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import supabase from '../supabaseClient'; // client Supabase
+import supabase from '../supabaseClient';
 import toast from 'react-hot-toast';
 
 const CreateProfileForm = () => {
   const navigate = useNavigate();
   const [hoveredButton, setHoveredButton] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     mission: '',
@@ -17,16 +18,12 @@ const CreateProfileForm = () => {
     confirmPassword: ''
   });
 
-  const [loading, setLoading] = useState(false);
-
-  // Liste des pays africains
   const countries = [
-    'Cameroun', 'Sénégal', 'Ghana', 'Nigeria', 'Kenya', 'Afrique du Sud',
-    'Maroc', 'Égypte', 'Éthiopie', 'Tanzanie', 'Mali', 'Burkina Faso',
+    'Cameroon', 'Sénégal', 'Ghana', 'Nigeria', 'Kenya', 'Afrique du Sud',
+    'Maroc', 'Egypt', 'Éthiopie', 'Tanzanie', 'Mali', 'Burkina Faso',
     'Côte d\'Ivoire', 'Niger', 'Tchad', 'Autre'
   ];
 
-  // Domaines d'intervention
   const availableFocusAreas = [
     'Éducation', 'Santé', 'Droits humains', 'Environnement',
     'Égalité des genres', 'Développement économique',
@@ -34,30 +31,19 @@ const CreateProfileForm = () => {
     'Protection', 'Justice', 'Jeunesse', 'Autonomisation'
   ];
 
-  // Gestion des changements dans les inputs
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Sélection/déselection d’un domaine d’intervention
   const handleFocusAreaChange = (area) => {
-    if (formData.focus_areas.includes(area)) {
-      setFormData({
-        ...formData,
-        focus_areas: formData.focus_areas.filter(a => a !== area)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        focus_areas: [...formData.focus_areas, area]
-      });
-    }
+    setFormData(prev => ({
+      ...prev,
+      focus_areas: prev.focus_areas.includes(area)
+        ? prev.focus_areas.filter(a => a !== area)
+        : [...prev.focus_areas, area]
+    }));
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,15 +60,16 @@ const CreateProfileForm = () => {
     setLoading(true);
 
     try {
-      // 1️⃣ Création du compte utilisateur
-      const { error: authError } = await supabase.auth.signUp({
+      // 1️⃣ Création du compte Supabase
+      const { data: signUpData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password
       });
 
       if (authError) throw authError;
+      if (!signUpData.user) throw new Error('Impossible de récupérer l’utilisateur');
 
-      // 2️⃣ Sauvegarde temporaire des infos dans localStorage
+      // ⚡ Sauvegarde temporaire des infos dans localStorage
       localStorage.setItem("pendingProfile", JSON.stringify({
         name: formData.name,
         mission: formData.mission,
@@ -90,36 +77,55 @@ const CreateProfileForm = () => {
         focus_areas: formData.focus_areas
       }));
 
-      toast.success('Compte créé 🎉 Vérifiez votre email pour confirmer, puis connectez-vous.');
+      toast.success(
+        'Compte créé 🎉 Vérifiez votre email pour confirmer, puis connectez-vous.'
+      );
+
       navigate('/login');
     } catch (error) {
-      console.error('Erreur:', error.message);
+      console.error('Erreur création compte:', error.message);
       toast.error('Erreur: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBackToHome = () => {
-    navigate('/');
+  // Cette fonction sera appelée **après login** pour créer l’OSC
+  const createOSC = async (userId) => {
+    const pendingProfile = JSON.parse(localStorage.getItem("pendingProfile"));
+    if (!pendingProfile) return;
+
+    try {
+      const { error: oscError } = await supabase.from('csos').insert([
+        {
+          user_id: userId,
+          name: pendingProfile.name,
+          mission: pendingProfile.mission,
+          country: pendingProfile.country,
+          focus_areas: pendingProfile.focus_areas
+        }
+      ]);
+
+      if (oscError) throw oscError;
+      localStorage.removeItem("pendingProfile");
+      console.log("OSC créée avec succès !");
+    } catch (error) {
+      console.error("Erreur création OSC après login:", error.message);
+    }
   };
 
-  const handleGoToLogin = () => {
-    navigate('/login');
-  };
+  const handleBackToHome = () => navigate('/');
+  const handleGoToLogin = () => navigate('/login');
 
   return (
     <div style={styles.container}>
-      {/* Navigation */}
+      {/* Navbar */}
       <nav style={styles.navbar}>
         <div style={styles.navContainer}>
           <div style={styles.logo} onClick={handleBackToHome}>AFRICONNECT</div>
           <button
             onClick={handleBackToHome}
-            style={{
-              ...styles.btnOutline,
-              ...(hoveredButton === 'back' ? styles.btnOutlineHover : {})
-            }}
+            style={{ ...styles.btnOutline, ...(hoveredButton === 'back' ? styles.btnOutlineHover : {}) }}
             onMouseEnter={() => setHoveredButton('back')}
             onMouseLeave={() => setHoveredButton(null)}
           >
@@ -133,63 +139,29 @@ const CreateProfileForm = () => {
         <div style={styles.formContainer}>
           <div style={styles.formCard}>
             <h1 style={styles.formTitle}>Créer un profil</h1>
-            <p style={styles.formSubtitle}>
-              Rejoignez le réseau AfriConnect
-            </p>
+            <p style={styles.formSubtitle}>Rejoignez le réseau AfriConnect</p>
 
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  style={styles.input}
-                  placeholder="exemple@mail.com"
-                  required
-                />
+                <input type="email" name="email" value={formData.email} onChange={handleInputChange} style={styles.input} placeholder="exemple@mail.com" required />
               </div>
 
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Nom de l'organisation *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  style={styles.input}
-                  placeholder="Ex: EcoGreen Cameroun"
-                  required
-                />
+                <input type="text" name="name" value={formData.name} onChange={handleInputChange} style={styles.input} placeholder="Ex: EcoGreen Cameroun" required />
               </div>
 
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Mission *</label>
-                <textarea
-                  name="mission"
-                  value={formData.mission}
-                  onChange={handleInputChange}
-                  style={styles.textarea}
-                  placeholder="Décrivez brièvement la mission de votre organisation..."
-                  rows="4"
-                  required
-                />
+                <textarea name="mission" value={formData.mission} onChange={handleInputChange} style={styles.textarea} placeholder="Décrivez brièvement la mission..." rows="4" required />
               </div>
 
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Pays *</label>
-                <select
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  style={styles.select}
-                  required
-                >
+                <select name="country" value={formData.country} onChange={handleInputChange} style={styles.select} required>
                   <option value="">Sélectionner un pays</option>
-                  {countries.map(country => (
-                    <option key={country} value={country}>{country}</option>
-                  ))}
+                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
@@ -201,10 +173,7 @@ const CreateProfileForm = () => {
                       key={area}
                       type="button"
                       onClick={() => handleFocusAreaChange(area)}
-                      style={{
-                        ...styles.tagButton,
-                        ...(formData.focus_areas.includes(area) ? styles.tagButtonActive : {})
-                      }}
+                      style={{ ...styles.tagButton, ...(formData.focus_areas.includes(area) ? styles.tagButtonActive : {}) }}
                     >
                       {area}
                     </button>
@@ -215,55 +184,22 @@ const CreateProfileForm = () => {
               <div style={styles.inputRow}>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Mot de passe *</label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    style={styles.input}
-                    placeholder="••••••••"
-                    required
-                    minLength="6"
-                  />
+                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} style={styles.input} placeholder="••••••••" required minLength="6" />
                 </div>
-
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Confirmer *</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    style={styles.input}
-                    placeholder="••••••••"
-                    required
-                  />
+                  <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} style={styles.input} placeholder="••••••••" required />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                style={{
-                  ...styles.btnPrimary,
-                  ...(hoveredButton === 'submit' ? styles.btnPrimaryHover : {})
-                }}
-                disabled={loading}
-                onMouseEnter={() => setHoveredButton('submit')}
-                onMouseLeave={() => setHoveredButton(null)}
-              >
+              <button type="submit" style={{ ...styles.btnPrimary, ...(hoveredButton === 'submit' ? styles.btnPrimaryHover : {}) }} disabled={loading} onMouseEnter={() => setHoveredButton('submit')} onMouseLeave={() => setHoveredButton(null)}>
                 {loading ? 'Création...' : 'Créer mon profil'}
               </button>
             </form>
 
             <div style={styles.loginPrompt}>
-              <p>
-                Déjà un compte ?{' '}
-                <button
-                  onClick={handleGoToLogin}
-                  style={styles.linkButton}
-                >
-                  Se connecter
-                </button>
+              <p>Déjà un compte ?{' '}
+                <button onClick={handleGoToLogin} style={styles.linkButton}>Se connecter</button>
               </p>
             </div>
           </div>

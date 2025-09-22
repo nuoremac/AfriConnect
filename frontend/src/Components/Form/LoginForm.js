@@ -14,13 +14,33 @@ const LoginForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const createOSC = async (userId) => {
+    const pendingProfile = JSON.parse(localStorage.getItem("pendingProfile"));
+    if (!pendingProfile) return;
+
+    try {
+      const { error: oscError } = await supabase.from('csos').insert([
+        {
+          user_id: userId,
+          name: pendingProfile.name,
+          mission: pendingProfile.mission,
+          country: pendingProfile.country,
+          focus_areas: pendingProfile.focus_areas
+        }
+      ]);
+      if (oscError) throw oscError;
+      localStorage.removeItem("pendingProfile");
+    } catch (error) {
+      console.error("Erreur création OSC:", error.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Tentative de connexion
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email.toLowerCase(),
         password: formData.password
       });
@@ -29,22 +49,21 @@ const LoginForm = () => {
         if (error.message.includes('Invalid login credentials')) {
           toast.error('Email ou mot de passe incorrect.');
         } else if (error.message.includes('Email not confirmed')) {
-          // Renvoi automatique de l'email de confirmation
-          const { error: resendError } = await supabase.auth.resendConfirmationEmail({
-            email: formData.email.toLowerCase()
-          });
-          if (resendError) {
-            toast.error('Erreur lors de l’envoi de l’email de confirmation: ' + resendError.message);
-          } else {
-            toast.error('Votre email n’est pas confirmé. Un email de confirmation a été renvoyé.');
-          }
+          toast.error('Votre email n’est pas confirmé. Vérifiez votre boîte mail.');
         } else {
           toast.error('Erreur: ' + error.message);
         }
         throw error;
       }
 
-      // Connexion réussie
+      if (!data.user) {
+        toast.error('Impossible de récupérer l’utilisateur');
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // Création de l’OSC si nécessaire
+      await createOSC(data.user.id);
+
       toast.success('Connexion réussie !');
       navigate('/discover');
 
@@ -136,7 +155,6 @@ const LoginForm = () => {
   );
 };
 
-// Styles (reprendre ceux de CreateProfileForm.js)
 const styles = {
   container: { fontFamily: 'sans-serif', background: '#f8f9fa', minHeight: '100vh' },
   navbar: { background: 'white', padding: '20px', borderBottom: '1px solid #1877f2' },

@@ -3,100 +3,135 @@ import React, { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
 import FilterPanel from './FilterPanel';
 import OSCGrid from './OSCGrid';
-import { mockOSCs } from './mockData';
+import supabase from '../supabaseClient'; // ⚡ Vérifie ton chemin vers supabaseClient
 
 const DiscoveryPage = () => {
-  // STATE - données de la page
-  const [allOSCs] = useState(mockOSCs); // Toutes les OSC (données originales)
-  const [filteredOSCs, setFilteredOSCs] = useState(mockOSCs); // OSC affichées après filtres
-  const [loading, setLoading] = useState(false); // État de chargement
-  const [searchTerm, setSearchTerm] = useState(''); // Terme de recherche
-  const [currentFilters, setCurrentFilters] = useState({}); // Filtres actifs
+  // STATE
+  const [allOSCs, setAllOSCs] = useState([]); 
+  const [filteredOSCs, setFilteredOSCs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentFilters, setCurrentFilters] = useState({});
 
-  // EVENTS - fonctions d'interaction : rechercher par mot clé
+  // Générer des initiales à partir du nom
+  const getInitials = (name) => {
+    if (!name) return '??';
+    return name
+      .split(' ')
+      .map(word => word[0]?.toUpperCase())
+      .join('')
+      .slice(0, 2); // max 2 lettres
+  };
+
+  // Générer un pourcentage aléatoire (si pas fourni par la base)
+  const randomPercentage = () => Math.floor(Math.random() * 100) + 1;
+
+  // Fonction pour formater un OSC
+  const formatOSC = (osc) => ({
+    ...osc,
+    focus_areas: Array.isArray(osc.focus_areas)
+      ? osc.focus_areas
+      : (osc.focus_areas ? osc.focus_areas.split(',') : []),
+    initials: getInitials(osc.name),
+    percentage: osc.percentage ?? randomPercentage()
+  });
+
+  // FETCH depuis Supabase
+  useEffect(() => {
+    const fetchOSCs = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('csos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erreur récupération OSC:', error.message);
+      } else {
+        const formattedData = data.map(formatOSC);
+        setAllOSCs(formattedData);
+        setFilteredOSCs(formattedData);
+      }
+      setLoading(false);
+    };
+
+    fetchOSCs();
+  }, []);
+
+  // EVENTS - recherche
   const handleSearch = (term) => {
     setSearchTerm(term);
     applyFilters(term, currentFilters);
   };
 
-  // Filtrage par critères
+  // EVENTS - filtres
   const handleFilter = (newFilters) => {
     setCurrentFilters(newFilters);
     applyFilters(searchTerm, newFilters);
   };
 
-  // Fonction pour appliquer recherche + filtres
+  // Fonction recherche + filtres
   const applyFilters = (term, filters) => {
     setLoading(true);
-    
-    // Simuler un délai de recherche (optionnel)
+
     setTimeout(() => {
       let result = [...allOSCs];
 
-      // Appliquer la recherche par terme
+      // Recherche par mot clé
       if (term && term.trim() !== '') {
         result = result.filter(osc => {
           const searchLower = term.toLowerCase();
           return (
-            osc.name.toLowerCase().includes(searchLower) ||
-            osc.description.toLowerCase().includes(searchLower) ||
-            osc.location.toLowerCase().includes(searchLower) ||
-            osc.focus_areas.some(area => 
+            osc.name?.toLowerCase().includes(searchLower) ||
+            osc.mission?.toLowerCase().includes(searchLower) ||
+            osc.country?.toLowerCase().includes(searchLower) ||
+            osc.focus_areas?.some(area =>
               area.toLowerCase().includes(searchLower)
             )
           );
         });
       }
 
-      // Appliquer les filtres
+      // Filtre par pays
       if (filters.country && filters.country !== 'Tous les pays') {
         result = result.filter(osc => osc.country === filters.country);
       }
 
+      // Filtre par secteur
       if (filters.sector && filters.sector !== 'Tous les secteurs') {
-        result = result.filter(osc => 
+        result = result.filter(osc =>
           osc.focus_areas.includes(filters.sector)
         );
       }
 
-      // Filtre par taille supprimé selon demande utilisateur
+      // ⚡ Reformater pour garantir initials + percentage
+      result = result.map(formatOSC);
 
       setFilteredOSCs(result);
       setLoading(false);
-    }, 300); // 300ms de délai pour simuler une recherche
+    }, 300);
   };
 
-  // Effect pour initialiser la page
-  useEffect(() => {
-    // Au chargement de la page, afficher toutes les OSC
-    setFilteredOSCs(allOSCs);
-  }, [allOSCs]);
-
-  // RENDER - affichage de la page
   return (
     <div style={styles.container}>
-      {/* En-tête de la page */}
       <div style={styles.header}>
-        <h1 style={styles.title}> Découvrir les OSC</h1>
+        <h1 style={styles.title}>Découvrir les OSC</h1>
         <p style={styles.subtitle}>
           Trouvez des partenaires compatibles avec vos projets et initiatives
         </p>
       </div>
 
-      {/* Barre de recherche */}
-      <SearchBar 
+      <SearchBar
         onSearch={handleSearch}
-        placeholder="Rechercher par nom, secteur, expertise, localisation..."
+        placeholder="Rechercher par nom, mission, secteur, localisation..."
       />
 
-      {/* Panneau de filtres */}
-      <FilterPanel 
+      <FilterPanel
         onFilter={handleFilter}
         initialFilters={currentFilters}
       />
 
-      {/* Grille des OSC */}
-      <OSCGrid 
+      <OSCGrid
         oscs={filteredOSCs}
         loading={loading}
       />
@@ -104,7 +139,7 @@ const DiscoveryPage = () => {
   );
 };
 
-// STYLES - CSS en JavaScript
+// STYLES (inchangés)
 const styles = {
   container: {
     maxWidth: '1200px',
@@ -112,49 +147,27 @@ const styles = {
     padding: '20px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
-
   header: {
     textAlign: 'center',
     marginBottom: '40px',
     padding: '20px 0'
   },
-
   title: {
     fontSize: '32px',
     fontWeight: '700',
     color: '#1c1e21',
     marginBottom: '8px',
-    background: ' #1877f2',
+    background: '#1877f2',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text'
   },
-
   subtitle: {
     fontSize: '18px',
     color: '#65676b',
     lineHeight: '1.5',
     maxWidth: '600px',
     margin: '0 auto'
-  },
-
-  // Responsive design
-  '@media (max-width: 768px)': {
-    container: {
-      padding: '10px'
-    },
-    
-    header: {
-      marginBottom: '30px'
-    },
-    
-    title: {
-      fontSize: '28px'
-    },
-    
-    subtitle: {
-      fontSize: '16px'
-    }
   }
 };
 

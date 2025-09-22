@@ -3,32 +3,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const OSCCard = ({ osc }) => {
-
-  // STATE - données internes du composant
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
-  const navigate = useNavigate();// Hook pour la navigation
-
-  // EVENTS - actions utilisateur
   const handleViewProfile = () => {
-    // console.log(`Voir profil de ${osc.name}`);
-    navigate(`/profile/${osc.id}`); //Navigation vers la page de profil
-    // Logique pour voir le profil
-
- 
-  };
-  const handleSendRequest = () => {
-    console.log(`Envoyer requête à ${osc.name}`);
-    // Logique pour envoyer une requête
+    navigate(`/profile/${osc.id}`);
   };
 
   const handleCardHover = (hovering) => {
     setIsHovered(hovering);
   };
 
-  // RENDER - JSX du composant
   return (
-    <div 
+    <div
       style={{
         ...styles.card,
         ...(isHovered ? styles.cardHovered : {})
@@ -38,32 +25,32 @@ const OSCCard = ({ osc }) => {
     >
       {/* Badge de score de matching */}
       <div style={styles.matchBadge}>
-        {osc.matchScore}%
+        {osc.percentage}%
       </div>
 
       {/* En-tête de la carte */}
       <div style={styles.cardHeader}>
         <div style={styles.cardAvatar}>
-          {osc.avatar}
+          {osc.initials}
         </div>
         <div style={styles.cardInfo}>
           <h3 style={styles.cardTitle}>{osc.name}</h3>
           <div style={styles.cardLocation}>
-             {osc.location}
+            {osc.country || osc.location || '-'}
           </div>
         </div>
       </div>
 
       {/* Description */}
       <div style={styles.cardDescription}>
-        {osc.description}
+        {osc.mission || osc.description || '-'}
       </div>
 
       {/* Tags des secteurs */}
       <div style={styles.tags}>
         {osc.focus_areas.map((area, index) => (
-          <span 
-            key={index} 
+          <span
+            key={index}
             style={{
               ...styles.tag,
               ...(index % 2 === 0 ? styles.tagBlue : styles.tagOrange)
@@ -76,26 +63,24 @@ const OSCCard = ({ osc }) => {
 
       {/* Boutons d'action */}
       <div style={styles.cardActions}>
-        <button 
+        <button
           style={styles.btnPrimary}
           onClick={handleViewProfile}
         >
-           Voir profil
+          Voir profil
         </button>
-        <button 
+        <button
           style={styles.btnOutlineSecondary}
-        //  redirection vers la page de chat
           onClick={() => navigate(`/collaborate/${osc.id}`)}
-          
         >
-           Requête de collaboration
+          Requête de collaboration
         </button>
       </div>
     </div>
   );
 };
 
-// STYLES - CSS en JavaScript
+// STYLES inchangés sauf cardAvatar pour centrer et arrondir correctement
 const styles = {
   card: {
     background: 'white',
@@ -105,16 +90,12 @@ const styles = {
     position: 'relative',
     transition: 'all 0.3s ease',
     overflow: 'hidden',
-    // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     cursor: 'pointer'
   },
-
   cardHovered: {
     transform: 'translateY(-3px)',
-    // boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
     borderColor: '#1877f2'
   },
-
   matchBadge: {
     position: 'absolute',
     top: '15px',
@@ -125,9 +106,7 @@ const styles = {
     borderRadius: '16px',
     fontSize: '12px',
     fontWeight: '600',
-    // boxShadow: '0 2px 8px rgba(66, 184, 131, 0.3)'
   },
-
   cardHeader: {
     display: 'flex',
     alignItems: 'center',
@@ -135,51 +114,41 @@ const styles = {
     marginBottom: '15px',
     marginTop: '10px'
   },
-
   cardAvatar: {
     width: '50px',
     height: '50px',
     background: '#f0f2f5',
-    borderRadius: '10px',
+    borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-     color: '#1877f2',
+    color: '#1877f2',
     fontWeight: '700',
     fontSize: '18px',
-    // boxShadow: '0 4px 12px rgba(24, 119, 242, 0.3)'
   },
-
-  cardInfo: {
-    flex: 1
-  },
-
+  cardInfo: { flex: 1 },
   cardTitle: {
     fontSize: '16px',
     fontWeight: '600',
     color: '#1c1e21',
     margin: '0 0 4px 0'
   },
-
   cardLocation: {
     color: '#65676b',
     fontSize: '14px'
   },
-
   cardDescription: {
     color: '#65676b',
     fontSize: '14px',
     lineHeight: '1.5',
     marginBottom: '15px'
   },
-
   tags: {
     display: 'flex',
     gap: '8px',
     marginBottom: '20px',
     flexWrap: 'wrap'
   },
-
   tag: {
     padding: '6px 12px',
     borderRadius: '16px',
@@ -187,23 +156,19 @@ const styles = {
     fontWeight: '500',
     transition: 'all 0.2s ease'
   },
-
   tagBlue: {
     background: '#e7f3ff',
     color: '#1877f2'
   },
-
   tagOrange: {
     background: '#fff3e0',
     color: '#ff6900'
   },
-
   cardActions: {
     display: 'flex',
     gap: '10px',
     marginTop: '15px'
   },
-
   btnPrimary: {
     padding: '10px 16px',
     border: 'none',
@@ -212,7 +177,7 @@ const styles = {
     fontSize: '13px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    background: '#1877f2', // Bleu Facebook
+    background: '#1877f2',
     color: 'white',
     boxShadow: '0 2px 8px rgba(24, 119, 242, 0.3)',
     flex: 1,
@@ -221,12 +186,11 @@ const styles = {
     justifyContent: 'center',
     gap: '4px'
   },
-
   btnOutlineSecondary: {
     padding: '10px 16px',
     background: 'transparent',
-    color: '#ff6900', // Orange
-    border: '2px solid #ff6900', // Orange
+    color: '#ff6900',
+    border: '2px solid #ff6900',
     borderRadius: '8px',
     fontWeight: '600',
     fontSize: '13px',

@@ -95,10 +95,12 @@ export const mockOSCs = [
 // Données pour les filtres
 export const countries = [
   "Tous les pays",
-  "Cameroun", 
-  "Sénégal",
-  "Côte d'Ivoire",
-  "Gabon"
+  "Cameroon", 
+  "Nigeria",
+  "Egypt",
+  "Ghana",
+  "South Africa",
+  "Kenya"
 ];
 
 export const sectors = [
