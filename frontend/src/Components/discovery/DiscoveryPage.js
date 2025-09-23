@@ -23,17 +23,13 @@ const DiscoveryPage = () => {
       .slice(0, 2); // max 2 lettres
   };
 
-  // Générer un pourcentage aléatoire (si pas fourni par la base)
-  const randomPercentage = () => Math.floor(Math.random() * 100) + 1;
-
-  // Fonction pour formater un OSC
+  // Fonction pour formater un OSC (sans percentage)
   const formatOSC = (osc) => ({
     ...osc,
     focus_areas: Array.isArray(osc.focus_areas)
       ? osc.focus_areas
       : (osc.focus_areas ? osc.focus_areas.split(',') : []),
-    initials: getInitials(osc.name),
-    percentage: osc.percentage ?? randomPercentage()
+    initials: getInitials(osc.name)
   });
 
   // FETCH depuis Supabase
@@ -104,7 +100,7 @@ const DiscoveryPage = () => {
         );
       }
 
-      // ⚡ Reformater pour garantir initials + percentage
+      // ⚡ Reformater pour garantir initials (sans percentage)
       result = result.map(formatOSC);
 
       setFilteredOSCs(result);
@@ -139,7 +135,7 @@ const DiscoveryPage = () => {
   );
 };
 
-// STYLES (inchangés)
+// STYLES (ajustés pour enlever toute référence au pourcentage)
 const styles = {
   container: {
     maxWidth: '1200px',
@@ -168,7 +164,19 @@ const styles = {
     lineHeight: '1.5',
     maxWidth: '600px',
     margin: '0 auto'
-  }
+  },
+  // Si le pourcentage était stylisé dans OSCGrid, supprime ces styles si présents
+  // Exemple de style à enlever (si applicable) :
+  // progressBar: {
+  //   width: '100%',
+  //   height: '10px',
+  //   background: '#e0e0e0',
+  //   borderRadius: '5px'
+  // },
+  // percentageText: {
+  //   fontSize: '14px',
+  //   color: '#333'
+  // }
 };
 
 export default DiscoveryPage;

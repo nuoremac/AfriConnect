@@ -23,11 +23,6 @@ const OSCCard = ({ osc }) => {
       onMouseEnter={() => handleCardHover(true)}
       onMouseLeave={() => handleCardHover(false)}
     >
-      {/* Badge de score de matching */}
-      <div style={styles.matchBadge}>
-        {osc.percentage}%
-      </div>
-
       {/* En-tête de la carte */}
       <div style={styles.cardHeader}>
         <div style={styles.cardAvatar}>
@@ -80,7 +75,7 @@ const OSCCard = ({ osc }) => {
   );
 };
 
-// STYLES inchangés sauf cardAvatar pour centrer et arrondir correctement
+// STYLES (ajustés pour enlever matchBadge)
 const styles = {
   card: {
     background: 'white',
@@ -95,17 +90,6 @@ const styles = {
   cardHovered: {
     transform: 'translateY(-3px)',
     borderColor: '#1877f2'
-  },
-  matchBadge: {
-    position: 'absolute',
-    top: '15px',
-    right: '15px',
-    background: '#42b883',
-    color: 'white',
-    padding: '6px 10px',
-    borderRadius: '16px',
-    fontSize: '12px',
-    fontWeight: '600',
   },
   cardHeader: {
     display: 'flex',
