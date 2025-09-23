@@ -15,10 +15,13 @@ const CollaborationChat = () => {
 
   // Récupérer l'utilisateur connecté
   useEffect(() => {
-    const user = supabase.auth.user();
-    if (user) {
-      setCurrentUser({ id: user.id, name: user.user_metadata?.full_name || 'Moi' });
-    }
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser({ id: user.id, name: user.user_metadata?.full_name || 'Moi' });
+      }
+    };
+    getUser();
   }, []);
 
   // Scroll automatique vers le bas
@@ -33,7 +36,7 @@ const CollaborationChat = () => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, chat_id, sender_id, content, created_at')
         .eq('chat_id', oscId)
         .order('created_at', { ascending: true });
 
@@ -67,7 +70,7 @@ const CollaborationChat = () => {
     };
   }, [oscId, currentUser.id]);
 
-  // Envoi d’un message
+  // Envoi d'un message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -88,7 +91,7 @@ const CollaborationChat = () => {
 
   // Générer initiales
   const getInitials = (name) => {
-    if (!name) return '';
+    if (!name) return 'O';
     return name
       .split(' ')
       .map(w => w[0]?.toUpperCase())
@@ -139,7 +142,7 @@ const CollaborationChat = () => {
                   }}>
                     {!msg.is_current_user && (
                       <div style={styles.senderAvatar}>
-                        {getInitials(msg.sender_name || `OSC ${msg.sender_id}`)}
+                        {getInitials('OSC')}
                       </div>
                     )}
 
@@ -147,7 +150,7 @@ const CollaborationChat = () => {
                       ...styles.messageBubble,
                       ...(msg.is_current_user ? styles.messageBubbleUser : styles.messageBubbleOther)
                     }}>
-                      {!msg.is_current_user && <div style={styles.senderName}>{msg.sender_name || `OSC ${msg.sender_id}`}</div>}
+                      {!msg.is_current_user && <div style={styles.senderName}>Organisation</div>}
                       <div style={styles.messageText}>{msg.content}</div>
                       <div style={styles.messageTime}>{formatTime(msg.created_at)}</div>
                     </div>
@@ -193,7 +196,175 @@ const CollaborationChat = () => {
   );
 };
 
-// Styles inchangés pour brevité, tu peux réutiliser tes styles existants
-const styles = { /* ... ton objet styles actuel ... */ };
+const styles = {
+  container: { 
+    fontFamily: 'sans-serif', 
+    background: '#f8f9fa', 
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  navbar: { 
+    background: 'white', 
+    padding: '20px', 
+    borderBottom: '1px solid #1877f2',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  navContainer: { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    maxWidth: '1200px',
+    margin: '0 auto'
+  },
+  logo: { 
+    fontSize: '32px', 
+    fontWeight: '700', 
+    color: '#1877f2', 
+    cursor: 'pointer' 
+  },
+  btnOutline: { 
+    padding: '10px 20px', 
+    border: '2px solid #1877f2', 
+    borderRadius: '8px', 
+    background: 'white', 
+    cursor: 'pointer',
+    color: '#1877f2',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s'
+  },
+  btnOutlineHover: { 
+    background: '#1877f2', 
+    color: 'white' 
+  },
+  main: { 
+    flex: 1,
+    display: 'flex', 
+    justifyContent: 'center', 
+    padding: '20px',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    width: '100%'
+  },
+  chatContainer: {
+    background: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    width: '100%',
+    maxWidth: '800px',
+    height: '70vh',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  messagesArea: {
+    flex: 1,
+    padding: '20px',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px'
+  },
+  dateSeperator: {
+    textAlign: 'center',
+    color: '#65676b',
+    fontSize: '12px',
+    padding: '10px 0',
+    borderBottom: '1px solid #e4e6ea',
+    marginBottom: '10px'
+  },
+  messageRow: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '10px',
+    marginBottom: '5px'
+  },
+  messageRowLeft: {
+    justifyContent: 'flex-start'
+  },
+  messageRowRight: {
+    justifyContent: 'flex-end'
+  },
+  senderAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: '#1877f2',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    flexShrink: 0
+  },
+  userAvatar: {
+    background: '#42b883'
+  },
+  messageBubble: {
+    maxWidth: '60%',
+    padding: '12px 16px',
+    borderRadius: '18px',
+    position: 'relative'
+  },
+  messageBubbleOther: {
+    background: '#f0f2f5',
+    color: '#1c1e21'
+  },
+  messageBubbleUser: {
+    background: '#0084ff',
+    color: 'white'
+  },
+  senderName: {
+    fontSize: '12px',
+    fontWeight: 'bold',
+    marginBottom: '4px',
+    opacity: 0.8
+  },
+  messageText: {
+    fontSize: '15px',
+    lineHeight: '1.4',
+    wordWrap: 'break-word'
+  },
+  messageTime: {
+    fontSize: '11px',
+    opacity: 0.7,
+    marginTop: '4px'
+  },
+  messageForm: {
+    padding: '20px',
+    borderTop: '1px solid #e4e6ea',
+    background: '#fafbfc'
+  },
+  inputContainer: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center'
+  },
+  messageInput: {
+    flex: 1,
+    padding: '12px 16px',
+    border: '1px solid #ccd0d5',
+    borderRadius: '20px',
+    fontSize: '15px',
+    outline: 'none',
+    background: 'white',
+    transition: 'border-color 0.2s'
+  },
+  sendButton: {
+    padding: '12px 24px',
+    background: '#0084ff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'background 0.2s'
+  },
+  sendButtonHover: {
+    background: '#0066cc'
+  }
+};
 
 export default CollaborationChat;
